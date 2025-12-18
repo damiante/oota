@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Oracle of the Alpha - MTG Game Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Overflow Button -->
+        <button id="overflow-btn" class="overflow-button" aria-label="Overflow Menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="5" r="1"/>
+                <circle cx="12" cy="12" r="1"/>
+                <circle cx="12" cy="19" r="1"/>
+            </svg>
+        </button>
+
+        <!-- Main Game Board -->
+        <div class="game-board">
+            <!-- Battlefield - Top row -->
+            <div class="zone zone-battlefield" data-zone="battlefield">
+                <div class="zone-label">Battlefield</div>
+                <div class="zone-content multi-card-zone">
+                    <div class="card-grid"></div>
+                </div>
+            </div>
+
+            <!-- Hand - Middle row -->
+            <div class="zone zone-hand" data-zone="hand">
+                <div class="zone-label">Hand</div>
+                <div class="zone-content multi-card-zone">
+                    <div class="card-grid"></div>
+                </div>
+            </div>
+
+            <!-- Bottom row - Exile, Graveyard, Library -->
+            <div class="zone zone-exile" data-zone="exile">
+                <div class="zone-label">Exile</div>
+                <div class="zone-content single-card-zone">
+                    <div class="card-container" data-card-id="exile-top"></div>
+                    <button class="view-zone-btn" onclick="viewZone('exile')" aria-label="View Exile">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                    <div class="card-count">0</div>
+                </div>
+            </div>
+
+            <div class="zone zone-graveyard" data-zone="graveyard">
+                <div class="zone-label">Graveyard</div>
+                <div class="zone-content single-card-zone">
+                    <div class="card-container" data-card-id="graveyard-top"></div>
+                    <button class="view-zone-btn" onclick="viewZone('graveyard')" aria-label="View Graveyard">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                    <div class="card-count">0</div>
+                </div>
+            </div>
+
+            <div class="zone zone-library" data-zone="library">
+                <div class="zone-label">Library</div>
+                <div class="zone-content single-card-zone">
+                    <div class="card-container" data-card-id="library-top"></div>
+                    <button class="view-zone-btn" onclick="viewZone('library')" aria-label="View Library">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                    <div class="card-count">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overflow Menu Modal -->
+    <div id="overflow-menu" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Actions</h2>
+                <button class="close-btn" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="menu-items" class="menu-items"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Zone Modal -->
+    <div id="view-zone-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content view-zone-content">
+            <div class="modal-header">
+                <h2 id="view-zone-title">View Zone</h2>
+                <button class="close-btn" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="view-zone-cards" class="view-zone-cards"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scry/Surveil Modal -->
+    <div id="scry-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content scry-content">
+            <div class="modal-header">
+                <h2 id="scry-title">Scry</h2>
+                <button class="close-btn" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="scry-input-section">
+                    <label for="scry-number">Number of cards:</label>
+                    <input type="number" id="scry-number" min="1" value="1">
+                    <button id="scry-submit" class="btn-primary">Submit</button>
+                    <button id="scry-confirm" class="btn-primary hidden">Confirm</button>
+                </div>
+                <div id="scry-cards-section" class="scry-cards-section hidden">
+                    <!-- Revealed cards row -->
+                    <div class="scry-area">
+                        <h3>Cards from library</h3>
+                        <div id="scry-cards" class="scry-cards"></div>
+                    </div>
+
+                    <!-- Destinations grid -->
+                    <div class="scry-destinations-grid">
+                        <div class="scry-destination-area">
+                            <h3 id="scry-top-label">Top of library</h3>
+                            <div id="scry-top" class="scry-destination" data-destination="top"></div>
+                        </div>
+                        <div class="scry-destination-area">
+                            <h3 id="scry-bottom-label">Bottom of library</h3>
+                            <div id="scry-bottom" class="scry-destination" data-destination="bottom"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Draw Modal -->
+    <div id="draw-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Draw Cards</h2>
+                <button class="close-btn" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label for="draw-number">Number of cards to draw:</label>
+                <input type="number" id="draw-number" min="1" value="1">
+                <button id="draw-submit" class="btn-primary">Draw</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dragging Preview -->
+    <div id="drag-preview" class="drag-preview hidden"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

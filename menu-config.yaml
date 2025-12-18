@@ -1,0 +1,31 @@
+# Overflow Menu Configuration
+# Items will be displayed in the order listed below
+# You can reorder these items to change the menu order
+
+- id: restart
+  label: Restart Game
+  action: restart
+
+- id: oracle-etb
+  label: Oracle ETB Effect
+  action: oracleETB
+
+- id: timetwister
+  label: Timetwister
+  action: timetwister
+
+- id: scry
+  label: Scry X
+  action: scry
+
+- id: surveil
+  label: Surveil X
+  action: surveil
+
+- id: draw
+  label: Draw X
+  action: draw
+
+- id: exile-graveyard
+  label: Exile Graveyard
+  action: exileGraveyard
