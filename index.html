@@ -108,12 +108,12 @@
         </div>
     </div>
 
-    <!-- Scry/Surveil Modal -->
-    <div id="scry-modal" class="modal hidden">
+    <!-- Scry/Surveil Input Modal -->
+    <div id="scry-input-modal" class="modal hidden">
         <div class="modal-backdrop"></div>
-        <div class="modal-content scry-content">
+        <div class="modal-content">
             <div class="modal-header">
-                <h2 id="scry-title">Scry</h2>
+                <h2 id="scry-input-title">Scry</h2>
                 <button class="close-btn" aria-label="Close">&times;</button>
             </div>
             <div class="modal-body">
@@ -121,9 +121,21 @@
                     <label for="scry-number">Number of cards:</label>
                     <input type="number" id="scry-number" min="1" value="1">
                     <button id="scry-submit" class="btn-primary">Submit</button>
-                    <button id="scry-confirm" class="btn-primary hidden">Confirm</button>
                 </div>
-                <div id="scry-cards-section" class="scry-cards-section hidden">
+            </div>
+        </div>
+    </div>
+
+    <!-- Scry/Surveil Arrange Modal -->
+    <div id="scry-arrange-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content scry-content">
+            <div class="modal-header">
+                <h2 id="scry-arrange-title">Scry</h2>
+                <button class="close-btn" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="scry-cards-section">
                     <!-- Revealed cards row -->
                     <div class="scry-area">
                         <h3>Cards from library</h3>
@@ -141,6 +153,9 @@
                             <div id="scry-bottom" class="scry-destination" data-destination="bottom"></div>
                         </div>
                     </div>
+                </div>
+                <div class="scry-confirm-section">
+                    <button id="scry-confirm" class="btn-primary">Confirm</button>
                 </div>
             </div>
         </div>

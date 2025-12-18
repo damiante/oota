@@ -490,6 +490,118 @@ function handleTouchEnd(e) {
     document.removeEventListener('touchend', handleTouchEnd);
 }
 
+// View card touch support with tap-and-hold
+let viewCardTouchState = {
+    timeout: null,
+    element: null,
+    zone: null,
+    index: null,
+    startX: 0,
+    startY: 0,
+    isDragging: false
+};
+
+function handleViewCardTouchStart(e, zone, index) {
+    // Allow two-finger scroll
+    if (e.touches.length > 1) {
+        return;
+    }
+
+    const touch = e.touches[0];
+    const element = e.currentTarget;
+
+    viewCardTouchState.element = element;
+    viewCardTouchState.zone = zone;
+    viewCardTouchState.index = index;
+    viewCardTouchState.startX = touch.clientX;
+    viewCardTouchState.startY = touch.clientY;
+    viewCardTouchState.isDragging = false;
+
+    // Start a timer for long press (500ms)
+    viewCardTouchState.timeout = setTimeout(() => {
+        // Long press detected - start drag
+        e.preventDefault();
+        viewCardTouchState.isDragging = true;
+
+        const card = gameState[zone][index];
+
+        dragState = {
+            active: true,
+            cardId: card.id,
+            sourceZone: zone,
+            sourceIndex: index,
+            startX: touch.clientX,
+            startY: touch.clientY
+        };
+
+        // Show drag preview
+        const preview = document.getElementById('drag-preview');
+        preview.innerHTML = `<img src="${card.getImage()}" alt="${card.getName()}">`;
+        preview.classList.remove('hidden');
+        preview.style.left = touch.clientX + 'px';
+        preview.style.top = touch.clientY + 'px';
+
+        // Add visual feedback
+        element.style.opacity = '0.5';
+
+        // Close the modal
+        closeModal('view-zone-modal');
+    }, 500);
+
+    document.addEventListener('touchmove', handleViewCardTouchMove, { passive: false });
+    document.addEventListener('touchend', handleViewCardTouchEnd);
+}
+
+function handleViewCardTouchMove(e) {
+    const touch = e.touches[0];
+    const deltaX = Math.abs(touch.clientX - viewCardTouchState.startX);
+    const deltaY = Math.abs(touch.clientY - viewCardTouchState.startY);
+
+    // If user moves finger significantly before long press completes, cancel it (allow scroll)
+    if (!viewCardTouchState.isDragging && (deltaX > 10 || deltaY > 10)) {
+        clearTimeout(viewCardTouchState.timeout);
+        if (viewCardTouchState.element) {
+            viewCardTouchState.element.style.opacity = '1';
+        }
+        return;
+    }
+
+    // If dragging has started, handle the drag
+    if (viewCardTouchState.isDragging && dragState.active) {
+        e.preventDefault();
+        handleTouchMove(e);
+    }
+}
+
+function handleViewCardTouchEnd(e) {
+    // Clear the timeout
+    clearTimeout(viewCardTouchState.timeout);
+
+    // Reset opacity
+    if (viewCardTouchState.element) {
+        viewCardTouchState.element.style.opacity = '1';
+    }
+
+    // If dragging, handle the drop
+    if (viewCardTouchState.isDragging && dragState.active) {
+        handleTouchEnd(e);
+    }
+
+    // Clean up
+    viewCardTouchState = {
+        timeout: null,
+        element: null,
+        zone: null,
+        index: null,
+        startX: 0,
+        startY: 0,
+        isDragging: false
+    };
+
+    document.removeEventListener('touchmove', handleViewCardTouchMove);
+    document.removeEventListener('touchend', handleViewCardTouchEnd);
+}
+
 // Modal functions
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
@@ -500,22 +612,16 @@ function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     modal.classList.add('hidden');
 
-    // Reset scry modal
-    if (modalId === 'scry-modal') {
-        document.getElementById('scry-cards-section').classList.add('hidden');
+    // Reset scry input modal
+    if (modalId === 'scry-input-modal') {
         document.getElementById('scry-number').value = '1';
+    }
 
-        // Reset input section visibility
-        const inputSection = document.querySelector('.scry-input-section');
-        const label = inputSection.querySelector('label');
-        const input = document.getElementById('scry-number');
-        const submitBtn = document.getElementById('scry-submit');
-        const confirmBtn = document.getElementById('scry-confirm');
-
-        label.classList.remove('hidden');
-        input.classList.remove('hidden');
-        submitBtn.classList.remove('hidden');
-        confirmBtn.classList.add('hidden');
+    // Reset scry arrange modal
+    if (modalId === 'scry-arrange-modal') {
+        document.getElementById('scry-cards').innerHTML = '';
+        document.getElementById('scry-top').innerHTML = '';
+        document.getElementById('scry-bottom').innerHTML = '';
     }
 }
 
@@ -581,10 +687,7 @@ function createViewCardElement(card, zone, index, count) {
     }
 
     div.addEventListener('dragstart', (e) => handleCardDragStart(e, zone, index));
-    div.addEventListener('touchstart', (e) => {
-        handleTouchStart(e, zone, index);
-        closeModal('view-zone-modal');
-    });
+    div.addEventListener('touchstart', (e) => handleViewCardTouchStart(e, zone, index));
 
     return div;
 }
@@ -615,44 +718,38 @@ function timetwisterAction() {
 }
 
 function openScryModal(type) {
-    const modal = document.getElementById('scry-modal');
-    const title = document.getElementById('scry-title');
-    const bottomLabel = document.getElementById('scry-bottom-label');
+    const modal = document.getElementById('scry-input-modal');
+    const title = document.getElementById('scry-input-title');
 
     title.textContent = type === 'scry' ? 'Scry X' : 'Surveil X';
-    bottomLabel.textContent = type === 'scry' ? 'Bottom of library' : 'Graveyard';
 
     modal.dataset.scryType = type;
-    openModal('scry-modal');
+    openModal('scry-input-modal');
 }
 
 function handleScrySubmit() {
     const number = parseInt(document.getElementById('scry-number').value);
-    const type = document.getElementById('scry-modal').dataset.scryType;
+    const type = document.getElementById('scry-input-modal').dataset.scryType;
 
     if (number < 1 || number > gameState.library.length) {
         alert(`Invalid number. Library has ${gameState.library.length} cards.`);
         return;
     }
 
+    // Close input modal
+    closeModal('scry-input-modal');
+
     // Get top N cards
     const cards = gameState.library.slice(0, number);
 
-    // Show scry section
-    const section = document.getElementById('scry-cards-section');
-    section.classList.remove('hidden');
+    // Set up arrange modal
+    const arrangeModal = document.getElementById('scry-arrange-modal');
+    const arrangeTitle = document.getElementById('scry-arrange-title');
+    const bottomLabel = document.getElementById('scry-bottom-label');
 
-    // Hide input elements and show confirm button
-    const inputSection = document.querySelector('.scry-input-section');
-    const label = inputSection.querySelector('label');
-    const input = document.getElementById('scry-number');
-    const submitBtn = document.getElementById('scry-submit');
-    const confirmBtn = document.getElementById('scry-confirm');
-
-    label.classList.add('hidden');
-    input.classList.add('hidden');
-    submitBtn.classList.add('hidden');
-    confirmBtn.classList.remove('hidden');
+    arrangeTitle.textContent = type === 'scry' ? 'Scry' : 'Surveil';
+    bottomLabel.textContent = type === 'scry' ? 'Bottom of library' : 'Graveyard';
+    arrangeModal.dataset.scryType = type;
 
     // Render cards
     const container = document.getElementById('scry-cards');
@@ -667,6 +764,9 @@ function handleScrySubmit() {
     // Clear destination areas
     document.getElementById('scry-top').innerHTML = '';
     document.getElementById('scry-bottom').innerHTML = '';
+
+    // Open arrange modal
+    openModal('scry-arrange-modal');
 }
 
 function createScryCardElement(card, index) {
@@ -718,7 +818,14 @@ function handleScryCardDrop(e) {
     }
 }
 
-let scryTouchState = { element: null, startX: 0, startY: 0, clone: null };
+let scryTouchState = {
+    element: null,
+    startX: 0,
+    startY: 0,
+    clone: null,
+    timeout: null,
+    isDragging: false
+};
 
 function handleScryTouchStart(e) {
     const card = e.target.closest('.scry-card');
@@ -729,28 +836,34 @@ function handleScryTouchStart(e) {
         return;
     }
 
-    e.preventDefault();
-
     const touch = e.touches[0];
     scryTouchState.element = card;
     scryTouchState.startX = touch.clientX;
     scryTouchState.startY = touch.clientY;
+    scryTouchState.isDragging = false;
 
-    // Create a clone for visual feedback
-    scryTouchState.clone = card.cloneNode(true);
-    scryTouchState.clone.style.position = 'fixed';
-    scryTouchState.clone.style.pointerEvents = 'none';
-    scryTouchState.clone.style.opacity = '0.8';
-    scryTouchState.clone.style.zIndex = '10000';
-    scryTouchState.clone.style.left = touch.clientX - 40 + 'px';
-    scryTouchState.clone.style.top = touch.clientY - 60 + 'px';
-    scryTouchState.clone.style.width = '80px';
-    document.body.appendChild(scryTouchState.clone);
+    // Start a timer for long press (500ms)
+    scryTouchState.timeout = setTimeout(() => {
+        // Long press detected - start drag
+        e.preventDefault();
+        scryTouchState.isDragging = true;
 
-    // Make original semi-transparent
-    card.style.opacity = '0.3';
+        // Create a clone for visual feedback
+        scryTouchState.clone = card.cloneNode(true);
+        scryTouchState.clone.style.position = 'fixed';
+        scryTouchState.clone.style.pointerEvents = 'none';
+        scryTouchState.clone.style.opacity = '0.8';
+        scryTouchState.clone.style.zIndex = '10000';
+        scryTouchState.clone.style.left = touch.clientX - 40 + 'px';
+        scryTouchState.clone.style.top = touch.clientY - 60 + 'px';
+        scryTouchState.clone.style.width = '80px';
+        document.body.appendChild(scryTouchState.clone);
 
-    document.addEventListener('touchmove', handleScryTouchMove);
+        // Make original semi-transparent
+        card.style.opacity = '0.3';
+    }, 500);
+
+    document.addEventListener('touchmove', handleScryTouchMove, { passive: false });
     document.addEventListener('touchend', handleScryTouchEnd);
 }
 
@@ -763,36 +876,58 @@ function handleScryTouchMove(e) {
     }
 
     const touch = e.touches[0];
-    scryTouchState.clone.style.left = touch.clientX - 40 + 'px';
-    scryTouchState.clone.style.top = touch.clientY - 60 + 'px';
+    const deltaX = Math.abs(touch.clientX - scryTouchState.startX);
+    const deltaY = Math.abs(touch.clientY - scryTouchState.startY);
 
-    // Highlight destination under touch
-    const element = document.elementFromPoint(touch.clientX, touch.clientY);
-    const destination = element?.closest('.scry-destination');
+    // If user moves finger significantly before long press completes, cancel it (allow scroll)
+    if (!scryTouchState.isDragging && (deltaX > 10 || deltaY > 10)) {
+        clearTimeout(scryTouchState.timeout);
+        if (scryTouchState.element) {
+            scryTouchState.element.style.opacity = '1';
+        }
+        return;
+    }
 
-    document.querySelectorAll('.scry-destination').forEach(d => {
-        d.style.background = '';
-        d.style.borderColor = '';
-    });
+    // If dragging has started, handle the drag
+    if (scryTouchState.isDragging && scryTouchState.clone) {
+        e.preventDefault();
+        scryTouchState.clone.style.left = touch.clientX - 40 + 'px';
+        scryTouchState.clone.style.top = touch.clientY - 60 + 'px';
 
-    if (destination) {
-        destination.style.background = '#c8e6c9';
-        destination.style.borderColor = '#4caf50';
+        // Highlight destination under touch
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        const destination = element?.closest('.scry-destination');
+
+        document.querySelectorAll('.scry-destination').forEach(d => {
+            d.style.background = '';
+            d.style.borderColor = '';
+        });
+
+        if (destination) {
+            destination.style.background = '#c8e6c9';
+            destination.style.borderColor = '#4caf50';
+        }
     }
 }
 
 function handleScryTouchEnd(e) {
     if (!scryTouchState.element) return;
 
-    const touch = e.changedTouches[0];
-    const element = document.elementFromPoint(touch.clientX, touch.clientY);
-    const destination = element?.closest('.scry-destination, .scry-cards');
+    // Clear the timeout
+    clearTimeout(scryTouchState.timeout);
 
     // Reset visual state
     scryTouchState.element.style.opacity = '1';
 
-    if (destination) {
-        destination.appendChild(scryTouchState.element);
+    // If dragging was active, handle the drop
+    if (scryTouchState.isDragging) {
+        const touch = e.changedTouches[0];
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        const destination = element?.closest('.scry-destination, .scry-cards');
+
+        if (destination) {
+            destination.appendChild(scryTouchState.element);
+        }
     }
 
     // Clean up
@@ -805,7 +940,14 @@ function handleScryTouchEnd(e) {
         d.style.borderColor = '';
     });
 
-    scryTouchState = { element: null, startX: 0, startY: 0, clone: null };
+    scryTouchState = {
+        element: null,
+        startX: 0,
+        startY: 0,
+        clone: null,
+        timeout: null,
+        isDragging: false
+    };
 
     document.removeEventListener('touchmove', handleScryTouchMove);
     document.removeEventListener('touchend', handleScryTouchEnd);
@@ -829,7 +971,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function handleScryConfirm() {
-    const type = document.getElementById('scry-modal').dataset.scryType;
+    const type = document.getElementById('scry-arrange-modal').dataset.scryType;
     const count = parseInt(document.getElementById('scry-cards').dataset.scryCount);
 
     // Store the cards temporarily before removing from library
@@ -874,7 +1016,7 @@ function handleScryConfirm() {
     }
 
     renderAllZones();
-    closeModal('scry-modal');
+    closeModal('scry-arrange-modal');
 }
 
 function openDrawModal() {
