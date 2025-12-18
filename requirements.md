@@ -5,6 +5,8 @@ I'll start by giving an outline of the purpose of the tool and what you have acc
 
 As you build the application, generate and populate a CLAUDE.md file that describes what you've done and how it works so that future prompts have access to understanding the application.
 
+When building, consider that the app is intended to be deployed as static content on Github Pages.
+
 # Tool outline
 
 The tool is designed to manage a paper game using the card "Oracle of the Alpha". This is a digital-only card which, when it enters the battlefield, shuffles a copy of each of the Power 9 (Black Lotus, Time Walk, Timetwister, Ancestral Recall, Mox Pearl, Mox Sapphire, Mox Jet, Mox Ruby, and Mox Emerald) into its owner's library.
@@ -50,10 +52,10 @@ For each zone represented by a single card (graveyard, library, exile), there sh
 3. Timetwister
 Each card in the hand and graveyard zones should be moved to the library zone, then the library should be shuffled. After shuffling, put the top 7 cards from the library into the hand.
 
-4. Scry
+4. Scry X
 On push, the UX should request a number and display a submit button. When submitted, the top N cards of the library should be displayed, where N was the number submitted. Two card placement areas should be displayed, representing the top and bottom of the library. The user should be able to freely reorder cards in both of these areas. A submit button should also be shown; on press, the UX should read the cards moved to the top and bottom placement areas and move the cards selected from the library to mirror this choice (ensuring order is preserved).
 
-5. Surveil
+5. Surveil X
 Same as Scry except instead of the "bottom of the library", there is a placement area representing the graveyard. On submission, cards placed on the library placement area are returned in the order selected through the popover and cards in the graveyard placement area are moved to the graveyard zone.
 
 
@@ -62,3 +64,7 @@ On push, the UX should request a number and display a submit button (as for Scry
 
 7. Exile graveyard
 Moves all cards in the graveyard zone to the exile zone.
+
+# Other
+
+After implementing the app, ensure you populate the CLAUDE.md file with a description of the app. Also write a README.md file describing the app, how to use it, and how to build and run locally.
