@@ -94,13 +94,15 @@ Cards are moved between zones using these core operations:
 
 The overflow menu is configurable via `menu-config.yaml`. Menu items are:
 
-1. **Oracle ETB Effect** - Adds one of each Power 9 to library and shuffles
-2. **View Library/Graveyard/Exile** - Opens modal to view full zone contents
+1. **Restart Game** - Clears localStorage and resets to 99 placeholder cards
+2. **Oracle ETB Effect** - Adds one of each Power 9 to library and shuffles
 3. **Timetwister** - Moves hand and graveyard to library, shuffles, draws 7
 4. **Scry X** - Look at top X cards, put them on top or bottom
 5. **Surveil X** - Look at top X cards, put them on top or in graveyard
 6. **Draw X** - Draw X cards from library to hand
 7. **Exile Graveyard** - Move all graveyard cards to exile
+
+Additionally, Library, Graveyard, and Exile zones have inline "view" buttons (eye icons) that provide quick access to viewing zone contents without opening the overflow menu.
 
 Menu configuration uses a simple YAML format:
 ```yaml
@@ -171,16 +173,48 @@ The UI features a modern, clean aesthetic:
 - Color-coded feedback (green for valid drop zones)
 - Responsive typography
 
-### 10. Future Enhancement Points
+### 10. State Persistence System
+
+The application implements automatic state persistence using localStorage:
+
+**Implementation**:
+- `saveGameState()` - Serializes game state to localStorage as JSON
+- `loadGameState()` - Deserializes and restores game state on app load
+- State is saved automatically after every game action that modifies zones
+
+**Auto-save triggers**:
+- Card movements between zones (`moveCard()`)
+- Zone shuffling (`shuffleZone()`)
+- Game initialization (`initializeGameState()`)
+- Timetwister resolution (`timetwisterAction()`)
+- Scry/Surveil confirmation (`handleScryConfirm()`)
+- Drawing cards (`handleDrawSubmit()`)
+- Exiling graveyard (`exileGraveyardAction()`)
+
+**State format**:
+```javascript
+{
+  library: ['card-id-1', 'card-id-2', ...],
+  hand: ['card-id-3', ...],
+  battlefield: [...],
+  graveyard: [...],
+  exile: [...]
+}
+```
+
+**Restart behavior**:
+- `restartGame()` removes the localStorage entry before reinitializing
+- This ensures a true fresh start when explicitly requested
+
+### 11. Future Enhancement Points
 
 The codebase is designed for extension:
 
 **Planned Features**:
-- `saveGameState()` / `loadGameState()` functions (already implemented)
-- Local storage persistence
 - Undo/redo functionality
 - Game history tracking
 - Additional game actions via menu config
+- Export/import for sharing game states
 
 **Extension Pattern**:
 To add a new menu action:
@@ -214,6 +248,13 @@ To add a new menu action:
 - Easier to implement custom drag preview
 - Compatible with all mobile browsers
 
+### Why localStorage for Persistence?
+- No server required - works purely client-side
+- Simple API for save/load operations
+- Automatic browser management (respects privacy settings)
+- Sufficient storage for game state (~5MB typical limit)
+- Instant save/load with no network latency
+
 ## Performance Considerations
 
 - Cards are rendered on-demand per zone
@@ -242,24 +283,26 @@ Minimum requirements:
 
 1. Library order is not visually intuitive in the view modal (shows as list)
 2. No undo functionality
-3. No game state persistence (refresh loses state)
-4. No multiplayer support
-5. Scry/Surveil drag-and-drop on mobile uses confirmation dialogs
-6. No accessibility features (ARIA labels, keyboard navigation)
+3. No multiplayer support
+4. Scry/Surveil uses long-press drag on mobile (250ms delay)
+5. No accessibility features (ARIA labels, keyboard navigation)
+6. State is browser-specific (not synced across devices)
+7. No export/import functionality for sharing game states
 
 ## Code Organization
 
 The JavaScript is organized into logical sections:
 
 1. **Constants & State** - Card definitions, game state, drag state
-2. **Initialization** - DOMContentLoaded, event setup
-3. **Config Loading** - YAML parsing, menu rendering
-4. **Core Operations** - Card movement, zone manipulation
-5. **Rendering** - Zone-specific render functions
-6. **Drag & Drop** - Mouse and touch handlers
-7. **Modal Management** - Open/close, content updates
-8. **Game Actions** - Oracle ETB, Timetwister, Scry, etc.
-9. **Utilities** - Save/load (for future use)
+2. **Game State Functions** - Initialize, restart, save/load persistence
+3. **Initialization** - DOMContentLoaded, event setup, state restoration
+4. **Config Loading** - YAML parsing, menu rendering
+5. **Core Operations** - Card movement, zone manipulation (with auto-save)
+6. **Rendering** - Zone-specific render functions
+7. **Drag & Drop** - Mouse and touch handlers (desktop & mobile)
+8. **Modal Management** - Open/close, content updates
+9. **Game Actions** - Oracle ETB, Timetwister, Scry, Draw, etc.
+10. **Persistence Utilities** - Save/load game state to/from localStorage
 
 This organization makes it easy to find and modify specific functionality.
 

@@ -62,11 +62,13 @@ function initializeGameState() {
     }
 
     renderAllZones();
+    saveGameState();
 }
 
 // Restart game - reset to initial state
 function restartGame() {
     if (confirm('Restart game? This will reset all zones and add 99 placeholder cards to the library.')) {
+        localStorage.removeItem('mtg-game-state');
         initializeGameState();
     }
 }
@@ -75,7 +77,14 @@ function restartGame() {
 document.addEventListener('DOMContentLoaded', () => {
     loadMenuConfig();
     initializeEventListeners();
-    initializeGameState();
+
+    // Try to load saved state, otherwise initialize fresh
+    const savedState = localStorage.getItem('mtg-game-state');
+    if (savedState) {
+        loadGameState();
+    } else {
+        initializeGameState();
+    }
 
     // Prevent context menu on all images to avoid mobile browser save dialogs
     document.addEventListener('contextmenu', (e) => {
@@ -126,6 +135,7 @@ function getDefaultMenuConfig() {
     return [
         { id: 'restart', label: 'Restart Game', action: 'restart' },
         { id: 'oracle-etb', label: 'Oracle ETB Effect', action: 'oracleETB' },
+        { id: 'shuffle-library', label: 'Shuffle Library', action: 'shuffleLibrary' },
         { id: 'timetwister', label: 'Timetwister', action: 'timetwister' },
         { id: 'scry', label: 'Scry X', action: 'scry' },
         { id: 'surveil', label: 'Surveil X', action: 'surveil' },
@@ -155,6 +165,7 @@ function executeMenuAction(action) {
     const actions = {
         restart: restartGame,
         oracleETB: oracleETB,
+        shuffleLibrary: shuffleLibrary,
         viewLibrary: () => viewZone('library'),
         viewGraveyard: () => viewZone('graveyard'),
         viewExile: () => viewZone('exile'),
@@ -288,6 +299,7 @@ function moveCard(fromZone, fromIndex, toZone, toPosition = 'top') {
     }
 
     renderZone(toZone);
+    saveGameState();
 }
 
 function shuffleZone(zone) {
@@ -297,6 +309,7 @@ function shuffleZone(zone) {
         [array[i], array[j]] = [array[j], array[i]];
     }
     renderZone(zone);
+    saveGameState();
 }
 
 // Render functions
@@ -638,6 +651,15 @@ function oracleETB() {
         addCardToZone('library', cardId, 'bottom');
     });
     shuffleZone('library');
+    // saveGameState is called by shuffleZone
+}
+
+function shuffleLibrary() {
+    if (gameState.library.length === 0) {
+        alert('Library is empty - nothing to shuffle.');
+        return;
+    }
+    shuffleZone('library');
 }
 
 function viewZone(zoneName) {
@@ -768,6 +790,7 @@ function timetwisterAction() {
     }
 
     renderAllZones();
+    saveGameState();
 }
 
 function openScryModal(type) {
@@ -1069,6 +1092,7 @@ function handleScryConfirm() {
     }
 
     renderAllZones();
+    saveGameState();
     closeModal('scry-arrange-modal');
 }
 
@@ -1095,6 +1119,7 @@ function handleDrawSubmit() {
     }
 
     renderAllZones();
+    saveGameState();
     closeModal('draw-modal');
 }
 
@@ -1104,9 +1129,10 @@ function exileGraveyardAction() {
         gameState.exile.unshift(card);
     }
     renderAllZones();
+    saveGameState();
 }
 
-// Save and load game state (for future enhancement)
+// Save and load game state
 function saveGameState() {
     const state = {
         library: gameState.library.map(c => c.id),

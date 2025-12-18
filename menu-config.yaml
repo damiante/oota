@@ -10,6 +10,10 @@
   label: Oracle ETB Effect
   action: oracleETB
 
+- id: shuffle-library
+  label: Shuffle Library
+  action: shuffleLibrary
+
 - id: timetwister
   label: Timetwister
   action: timetwister

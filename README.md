@@ -26,21 +26,26 @@ Since these cards don't exist physically in paper games, this tool lets you trac
 - **Graveyard** - Discarded cards on the lower left
 - **Exile** - Exiled cards on the upper left
 
+Each single-card zone (Library, Graveyard, Exile) has a quick-view button (eye icon) to see all cards without opening the overflow menu.
+
+### State Persistence
+Your game state automatically saves to your browser's local storage. When you refresh the page, all cards remain in their zones and positions. Only the "Restart Game" action clears the saved state and resets to a fresh game.
+
 ### Drag and Drop
 Move cards between zones by dragging them. On mobile, tap and hold a card, then drag it to the destination zone. The app works seamlessly on both desktop and mobile devices.
 
 ### Game Actions
 Access common game actions through the overflow menu (three-dot button in the top right):
 
-1. **Oracle ETB Effect** - Add one copy of each Power 9 to your library and shuffle
-2. **View Library** - See all cards in your library in order
-3. **View Graveyard** - See all cards in your graveyard
-4. **View Exile** - See all exiled cards
-5. **Timetwister** - Move hand and graveyard to library, shuffle, then draw 7 cards
-6. **Scry X** - Look at the top X cards and arrange them on top or bottom of your library
-7. **Surveil X** - Look at the top X cards and put them on top of your library or in your graveyard
-8. **Draw X** - Draw X cards from your library
-9. **Exile Graveyard** - Move all cards from graveyard to exile
+1. **Restart Game** - Clear all zones and reset to 99 placeholder cards in library
+2. **Oracle ETB Effect** - Add one copy of each Power 9 to your library and shuffle
+3. **Timetwister** - Move hand and graveyard to library, shuffle, then draw 7 cards
+4. **Scry X** - Look at the top X cards and arrange them on top or bottom of your library
+5. **Surveil X** - Look at the top X cards and put them on top of your library or in your graveyard
+6. **Draw X** - Draw X cards from your library
+7. **Exile Graveyard** - Move all cards from graveyard to exile
+
+You can also view zones by clicking the eye icon on Library, Graveyard, or Exile zones.
 
 ## How to Use
 
@@ -48,6 +53,8 @@ Access common game actions through the overflow menu (three-dot button in the to
 
 1. **Starting a Game**
    - Open the app in your browser
+   - If continuing a previous game, your cards will be exactly where you left them
+   - For a fresh start, tap the overflow menu and select "Restart Game"
    - Use "Oracle ETB Effect" to add the Power 9 to your library
    - Draw your opening hand using "Draw X"
 
@@ -56,15 +63,22 @@ Access common game actions through the overflow menu (three-dot button in the to
    - Drag it to the destination zone
    - Release to drop it there
    - The card will move from one zone to another
+   - All moves are automatically saved
 
 3. **Viewing Zones**
    - Single-card zones (Library, Graveyard, Exile) show only the top card
    - The number on each zone shows how many cards it contains
-   - Use "View" actions in the overflow menu to see all cards in a zone
+   - Click the eye icon on any single-card zone for a quick view
+   - Cards in view modals can be dragged directly to other zones
 
 4. **Managing Duplicates**
    - When multiple copies of the same card are in a zone, they display with a count badge
    - This keeps the UI clean and manageable
+
+5. **Game State Persistence**
+   - Your game state automatically saves after every action
+   - Refresh the page anytime - your cards stay in place
+   - State persists until you use "Restart Game" or clear browser data
 
 ### Advanced Actions
 
@@ -187,6 +201,11 @@ The app is optimized for mobile:
 - Check that all files in the `static/` folder are present
 - Clear your browser cache and reload
 
+**Game state not persisting**
+- Ensure your browser allows localStorage
+- Check that you're not in private/incognito mode
+- Some browsers block storage on file:// URLs - use a web server
+
 **Menu not appearing**
 - Check that `menu-config.yaml` is in the root directory
 - The app will use a default menu if the YAML file can't be loaded
@@ -200,12 +219,12 @@ The app is optimized for mobile:
 ## Future Enhancements
 
 Potential features for future versions:
-- Game state persistence (save/load)
 - Undo/redo functionality
 - Multiple player support
 - Game history tracking
 - Additional game actions
 - Customizable card sets
+- Export/import game state for sharing
 
 ## Technical Details
 
