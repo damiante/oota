@@ -412,6 +412,11 @@ function handleCardDragStart(e, zone, index) {
 
 // Touch support for mobile
 function handleTouchStart(e, zone, index) {
+    // Allow two-finger scroll - don't prevent default or start drag
+    if (e.touches.length > 1) {
+        return;
+    }
+
     e.preventDefault();
 
     const touch = e.touches[0];
@@ -440,6 +445,11 @@ function handleTouchStart(e, zone, index) {
 
 function handleTouchMove(e) {
     if (!dragState.active) return;
+
+    // Allow two-finger scroll
+    if (e.touches.length > 1) {
+        return;
+    }
 
     const touch = e.touches[0];
     const preview = document.getElementById('drag-preview');
@@ -714,6 +724,11 @@ function handleScryTouchStart(e) {
     const card = e.target.closest('.scry-card');
     if (!card) return;
 
+    // Allow two-finger scroll - don't prevent default or start drag
+    if (e.touches.length > 1) {
+        return;
+    }
+
     e.preventDefault();
 
     const touch = e.touches[0];
@@ -741,6 +756,11 @@ function handleScryTouchStart(e) {
 
 function handleScryTouchMove(e) {
     if (!scryTouchState.element) return;
+
+    // Allow two-finger scroll
+    if (e.touches.length > 1) {
+        return;
+    }
 
     const touch = e.touches[0];
     scryTouchState.clone.style.left = touch.clientX - 40 + 'px';
