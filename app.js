@@ -76,6 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMenuConfig();
     initializeEventListeners();
     initializeGameState();
+
+    // Prevent context menu on all images to avoid mobile browser save dialogs
+    document.addEventListener('contextmenu', (e) => {
+        if (e.target.tagName === 'IMG') {
+            e.preventDefault();
+        }
+    });
 });
 
 // Load menu configuration from YAML
@@ -517,7 +524,7 @@ function handleViewCardTouchStart(e, zone, index) {
     viewCardTouchState.startY = touch.clientY;
     viewCardTouchState.isDragging = false;
 
-    // Start a timer for long press (500ms)
+    // Start a timer for long press (250ms)
     viewCardTouchState.timeout = setTimeout(() => {
         // Long press detected - start drag
         e.preventDefault();
@@ -842,7 +849,7 @@ function handleScryTouchStart(e) {
     scryTouchState.startY = touch.clientY;
     scryTouchState.isDragging = false;
 
-    // Start a timer for long press (500ms)
+    // Start a timer for long press (250ms)
     scryTouchState.timeout = setTimeout(() => {
         // Long press detected - start drag
         e.preventDefault();
