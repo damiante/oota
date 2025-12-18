@@ -553,7 +553,7 @@ function handleViewCardTouchStart(e, zone, index) {
 
         // Close the modal
         closeModal('view-zone-modal');
-    }, 500);
+    }, 250);
 
     document.addEventListener('touchmove', handleViewCardTouchMove, { passive: false });
     document.addEventListener('touchend', handleViewCardTouchEnd);
@@ -693,10 +693,56 @@ function createViewCardElement(card, zone, index, count) {
         div.appendChild(badge);
     }
 
-    div.addEventListener('dragstart', (e) => handleCardDragStart(e, zone, index));
+    div.addEventListener('dragstart', (e) => {
+        handleCardDragStart(e, zone, index);
+        // Set up listener to close modal when drag leaves modal bounds
+        setupViewModalDragListener();
+    });
     div.addEventListener('touchstart', (e) => handleViewCardTouchStart(e, zone, index));
 
     return div;
+}
+
+// Track if we're dragging from view modal
+let viewModalDragListener = null;
+
+function setupViewModalDragListener() {
+    const modal = document.getElementById('view-zone-modal');
+    const modalContent = modal.querySelector('.modal-content');
+
+    // Remove any existing listener
+    if (viewModalDragListener) {
+        document.removeEventListener('drag', viewModalDragListener);
+    }
+
+    viewModalDragListener = (e) => {
+        // Check if drag position is outside modal content
+        const rect = modalContent.getBoundingClientRect();
+        const x = e.clientX;
+        const y = e.clientY;
+
+        // If coordinates are valid and outside modal, close it
+        if (x !== 0 && y !== 0) {
+            if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+                closeModal('view-zone-modal');
+                // Clean up listener
+                document.removeEventListener('drag', viewModalDragListener);
+                viewModalDragListener = null;
+            }
+        }
+    };
+
+    document.addEventListener('drag', viewModalDragListener);
+
+    // Also listen for dragend to clean up
+    const cleanupListener = () => {
+        if (viewModalDragListener) {
+            document.removeEventListener('drag', viewModalDragListener);
+            viewModalDragListener = null;
+        }
+        document.removeEventListener('dragend', cleanupListener);
+    };
+    document.addEventListener('dragend', cleanupListener);
 }
 
 function timetwisterAction() {
@@ -868,7 +914,7 @@ function handleScryTouchStart(e) {
 
         // Make original semi-transparent
         card.style.opacity = '0.3';
-    }, 500);
+    }, 250);
 
     document.addEventListener('touchmove', handleScryTouchMove, { passive: false });
     document.addEventListener('touchend', handleScryTouchEnd);
